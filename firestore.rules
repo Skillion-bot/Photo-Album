@@ -53,7 +53,7 @@ service cloud.firestore {
              data.title is string && data.title.size() <= 100 &&
              data.createdAt is int &&
              data.createdAt <= request.time.toMillis() &&
-             data.createdAt > request.time.toMillis() - 300000; // 5 minute window
+             data.createdAt > request.time.toMillis() - 900000; // 15 minute window
     }
 
     // --- Rules ---
@@ -62,7 +62,7 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUser(incoming()) && 
                     incoming().createdAt <= request.time.toMillis() && 
-                    incoming().createdAt > request.time.toMillis() - 300000;
+                    incoming().createdAt > request.time.toMillis() - 900000;
       allow update: if isOwner(userId) && isValidUser(incoming()) && 
                     incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoURL']) &&
                     incoming().createdAt == existing().createdAt;
@@ -75,7 +75,7 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(albumId) && isValidAlbum(incoming()) && 
                     incoming().id == albumId &&
                     incoming().createdAt <= request.time.toMillis() &&
-                    incoming().createdAt > request.time.toMillis() - 300000;
+                    incoming().createdAt > request.time.toMillis() - 900000;
                     
       allow update: if isSignedIn() && existing().userId == request.auth.uid && 
                     isValidAlbum(incoming()) &&

@@ -21,7 +21,7 @@ export function Layout() {
         <header className="flex h-16 items-center justify-between border-b border-white/5 px-6 lg:hidden">
           <div className="flex items-center gap-2 italic">
             <div className="h-3 w-3 rounded-full bg-white" />
-            <span className="font-display text-lg font-medium tracking-tighter text-white">SNAPVAULT</span>
+            <span className="font-display text-2xl font-bold tracking-tighter text-white">SNAPVAULT</span>
           </div>
           <div className="flex items-center gap-3">
              {!user && (
@@ -126,27 +126,27 @@ export function Layout() {
                 <X />
               </Button>
             </div>
-            <nav className="mt-12 space-y-8">
-               <NavLink to="/" onClick={() => setIsMobileMenuOpen(false)} className="block text-3xl font-light tracking-tighter text-white">Gallery</NavLink>
-               <NavLink to="/albums" onClick={() => setIsMobileMenuOpen(false)} className="block text-3xl font-light tracking-tighter text-white">Albums</NavLink>
-               <NavLink to="/upload" onClick={() => setIsMobileMenuOpen(false)} className="block text-3xl font-light tracking-tighter text-white">Upload</NavLink>
+            <nav className="mt-12 space-y-12">
+               <NavLink to="/" onClick={() => setIsMobileMenuOpen(false)} className="block text-6xl font-bold tracking-tighter text-white font-display">ROOT</NavLink>
+               <NavLink to="/albums" onClick={() => setIsMobileMenuOpen(false)} className="block text-6xl font-bold tracking-tighter text-white font-display">SETS</NavLink>
+               <NavLink to="/upload" onClick={() => setIsMobileMenuOpen(false)} className="block text-6xl font-bold tracking-tighter text-white font-display">SYNC</NavLink>
                
-               <div className="pt-8 border-t border-white/5">
+               <div className="pt-12 border-t border-white/5">
                  {user ? (
                     <button 
                       onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
-                      className="flex items-center gap-4 text-white/40 text-xl font-light tracking-tighter hover:text-white"
+                      className="flex items-center gap-6 text-white/40 text-2xl font-bold tracking-tighter hover:text-white font-display"
                     >
-                      <LogOut className="h-5 w-5" />
-                      Log Out
+                      <LogOut className="h-6 w-6" />
+                      TERMINATE
                     </button>
                  ) : (
                     <button 
                       onClick={() => { signInWithGoogle(); setIsMobileMenuOpen(false); }}
-                      className="flex items-center gap-4 text-white hover:text-white/80 text-xl font-light tracking-tighter"
+                      className="flex items-center gap-6 text-white hover:text-white/80 text-2xl font-bold tracking-tighter font-display"
                     >
-                      <LogIn className="h-5 w-5" />
-                      Connect Archive
+                      <LogIn className="h-6 w-6" />
+                      CONNECT
                     </button>
                  )}
                </div>

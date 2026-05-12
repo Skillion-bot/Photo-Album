@@ -29,27 +29,31 @@ export function Sidebar() {
             <div className="h-1.5 w-1.5 rounded-full bg-black" />
           </div>
           <div>
-             <h1 className="font-display text-xl font-medium tracking-tighter italic text-white">SNAPVAULT</h1>
-             <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Visual Archives</p>
+             <h1 className="font-display text-2xl font-bold tracking-tighter italic text-white leading-none">SNAPVAULT</h1>
+             <p className="text-[10px] uppercase tracking-[0.25em] text-white/30 mt-1">Visual Study Archive</p>
           </div>
         </NavLink>
       </div>
 
       <nav className="flex-1 space-y-10">
         <div>
-          <p className="mb-4 text-[10px] uppercase tracking-[0.2em] text-white/30 font-semibold">Library</p>
-          <ul className="space-y-4">
+          <p className="mb-6 text-[11px] uppercase tracking-[0.3em] text-white/20 font-bold">Main Index</p>
+          <ul className="space-y-6">
             {navItems.map((item) => (
               <li key={item.name}>
                 <NavLink
                   to={item.path}
                   className={({ isActive }) => cn(
-                    "flex items-center gap-3 text-sm transition-colors",
-                    isActive ? "text-white font-medium" : "text-white/40 hover:text-white"
+                    "flex items-center gap-4 text-base transition-all duration-300",
+                    isActive ? "text-white font-semibold transform translate-x-2" : "text-white/30 hover:text-white hover:translate-x-1"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
+                  {({ isActive }) => (
+                    <>
+                      <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-white/20")} />
+                      <span className="tracking-tight">{item.name}</span>
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}

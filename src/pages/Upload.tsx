@@ -15,6 +15,7 @@ export default function UploadPage() {
   
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -56,6 +57,7 @@ export default function UploadPage() {
     setSelectedFile(file);
     setError(null);
     setUploadProgress(0);
+    setUploadStatus(null);
     
     // Create preview
     const url = URL.createObjectURL(file);
@@ -85,6 +87,7 @@ export default function UploadPage() {
     setSelectedFile(null);
     setPreviewUrl(null);
     setUploadProgress(0);
+    setUploadStatus(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -95,6 +98,7 @@ export default function UploadPage() {
     setIsLoading(true);
     setError(null);
     setUploadProgress(0);
+    setUploadStatus('Preparing artifact for synchronization...');
     
     try {
       if (!formData.title || !formData.albumId) {
@@ -102,14 +106,19 @@ export default function UploadPage() {
       }
 
       // 1. Upload file to Firebase Storage with progress tracking
+      setUploadStatus('Uploading visual study to storage...');
       const storagePath = `users/${user.uid}/photos/${Date.now()}_${selectedFile.name}`;
       const downloadUrl = await uploadFileWithProgress(
         selectedFile, 
         storagePath, 
-        (progress) => setUploadProgress(progress)
+        (progress) => {
+          setUploadProgress(progress);
+          if (progress === 100) setUploadStatus('Verifying storage integrity...');
+        }
       );
 
       // 2. Add document to Firestore
+      setUploadStatus('Recording metadata in the index...');
       await addPhoto({
         userId: user.uid,
         albumId: formData.albumId,
@@ -120,6 +129,7 @@ export default function UploadPage() {
         height: dimensions.height,
       });
 
+      setUploadStatus('Artifact successfully archived.');
       setSuccess(true);
       setTimeout(() => navigate('/'), 2000);
     } catch (err) {
@@ -134,6 +144,7 @@ export default function UploadPage() {
       }
       setError(message);
       setUploadProgress(0);
+      setUploadStatus(null);
     } finally {
       setIsLoading(false);
     }
@@ -262,22 +273,29 @@ export default function UploadPage() {
             </div>
 
             <div className="flex gap-4 pt-8">
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 space-y-3">
                 <Button 
                   type="submit" 
                   disabled={isLoading || !selectedFile}
                   className="w-full rounded-xl bg-white py-6 text-[10px] uppercase tracking-[0.3em] font-bold text-black hover:bg-white/90 disabled:opacity-50"
                 >
-                  {isLoading ? `Processing... ${Math.round(uploadProgress)}%` : 'Authorize Submission'}
+                  {isLoading ? `Synthesizing... ${Math.round(uploadProgress)}%` : 'Authorize Submission'}
                 </Button>
+                
                 {isLoading && (
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
-                    <motion.div 
-                      className="h-full bg-white" 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
-                      transition={{ duration: 0.1 }}
-                    />
+                  <div className="space-y-2">
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                      <motion.div 
+                        className="h-full bg-white transition-all duration-300" 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                    {uploadStatus && (
+                      <p className="animate-pulse text-center text-[9px] uppercase tracking-widest text-white/40">
+                        {uploadStatus}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

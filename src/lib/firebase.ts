@@ -19,8 +19,9 @@ export async function signInWithGoogle() {
     
     // Create user profile in Firestore if it doesn't exist
     const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const now = Date.now();
+    
     if (!userDoc.exists()) {
-      const now = Date.now();
       await setDoc(doc(db, 'users', user.uid), {
         id: user.uid,
         email: user.email,
@@ -28,17 +29,31 @@ export async function signInWithGoogle() {
         photoURL: user.photoURL,
         createdAt: now,
       });
+    }
 
-      // Create default albums for the new user
-      const defaultAlbums = [
-        { id: 'nature', name: 'Nature Escapes', description: 'Breathtaking landscapes and wild wonders.' },
-        { id: 'urban', name: 'Urban Explorer', description: 'City lights and architectural marvels.' }
-      ];
+    // Ensure default albums exist for this user - they are shared but check if they exist globally or should they be user-specific?
+    // In our current rules, albums belong to a user. So they should be created if missing for this user.
+    // However, the ID 'nature' is global in our rules right now. 
+    // Let's make them global default IDs but ensure the userId matches the rule's expectation if we want users to "own" them.
+    
+    const defaultAlbums = [
+      { id: 'nature', name: 'Nature Escapes', description: 'Breathtaking landscapes and wild wonders.' },
+      { id: 'urban', name: 'Urban Explorer', description: 'City lights and architectural marvels.' }
+    ];
 
-      for (const album of defaultAlbums) {
-        await setDoc(doc(db, 'albums', album.id), {
+    for (const album of defaultAlbums) {
+      const albumRef = doc(db, 'albums', album.id);
+      const albumSnap = await getDoc(albumRef);
+      
+      // If global album doesn't exist, create it owned by the first user who signs in (or we can just skip this and use default logic in rules)
+      // Actually, my rules say: albumIdIsDefault(incoming().albumId) || exists(...) && userId == uid
+      // If it IS a default ID, it passes the check! So we don't even NEED the document for default ones.
+      // But for the UI to list them, we need them or have them hardcoded.
+      
+      if (!albumSnap.exists()) {
+        await setDoc(albumRef, {
           ...album,
-          userId: user.uid,
+          userId: user.uid, // First person to sign in "owns" the default albums? Or we could make userId 'system'
           photoCount: 0,
           createdAt: now,
           coverUrl: album.id === 'nature' 
@@ -47,6 +62,7 @@ export async function signInWithGoogle() {
         });
       }
     }
+    
     return user;
   } catch (error) {
     console.error('Error signing in with Google:', error);

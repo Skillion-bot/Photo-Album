@@ -43,15 +43,18 @@ export function Home() {
 
   return (
     <div className="space-y-12">
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-display text-4xl font-light tracking-tighter text-white lg:text-5xl">
-            {searchQuery ? 'Filtered Results' : 'All Perspectives'}
-            <span className="ml-4 text-white/20 italic">/ {new Date().getFullYear()}</span>
+      <header className="flex flex-col gap-10 sm:flex-row sm:items-end sm:justify-between border-b border-white/5 pb-12">
+        <div className="space-y-4">
+          <h1 className="font-display text-6xl font-bold tracking-[ -0.05em] text-white lg:text-8xl leading-none">
+            {searchQuery ? 'SEARCH' : 'ARCHIVE'}
           </h1>
-          <p className="max-w-xl text-xs italic tracking-wide text-white/40">
-            A curated archive of visual artifacts. Capturing the interplay of light, geometry, and existence.
-          </p>
+          <div className="flex flex-wrap items-center gap-4">
+             <span className="text-[10px] uppercase tracking-[0.4em] text-white/20 bg-white/5 px-2 py-1 rounded">Visual Study</span>
+             <span className="text-[10px] uppercase tracking-[0.4em] text-white/20">/</span>
+             <p className="text-xs tracking-tight text-white/40 italic font-medium">
+               Relishing the interplay of light and geometry across {photos.length} captured artifacts.
+             </p>
+          </div>
         </div>
         <div className="flex gap-4 text-[10px] uppercase tracking-[0.2em] text-white/40">
           <button className="transition-colors hover:text-white">Filter by Date</button>

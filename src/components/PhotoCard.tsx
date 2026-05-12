@@ -81,11 +81,11 @@ export const PhotoCard: React.FC<PhotoCardProps> = ({ photo, onClick }) => {
         </AnimatePresence>
 
         {/* Content Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+        <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-4 opacity-0 transition-all duration-500 ease-[0.22,1,0.36,1] group-hover:translate-y-0 group-hover:opacity-100">
           <div className="flex items-end justify-between">
             <div className="flex-1 min-w-0 pr-4">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">Vol. {new Date(photo.createdAt).getFullYear()}</p>
-              <h3 className="text-sm font-light tracking-tight text-white truncate">{photo.title}</h3>
+              <p className="text-[10px] uppercase tracking-[0.4em] text-white/40 mb-2 font-bold font-display">Archived {new Date(photo.createdAt).getFullYear()}</p>
+              <h3 className="text-xl font-bold tracking-tighter text-white truncate font-display group-hover:text-white/90">{photo.title}</h3>
             </div>
             <div className="flex items-center gap-2">
               {isOwner && (
