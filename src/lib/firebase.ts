@@ -1,7 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot, getDocFromServer } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { type Photo, type Album } from '../types';
 
@@ -148,6 +148,36 @@ export async function addPhoto(photoData: Omit<Photo, 'id' | 'createdAt'>) {
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
   }
+}
+
+export async function uploadFileWithProgress(
+  file: File, 
+  path: string, 
+  onProgress: (progress: number) => void
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          onProgress(progress);
+        }, 
+        (error) => {
+          console.error('Storage Upload Error:', error);
+          reject(new Error('Storage upload failed. Please check your connection or storage permissions.'));
+        }, 
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
 
 export async function uploadFile(file: File, path: string): Promise<string> {

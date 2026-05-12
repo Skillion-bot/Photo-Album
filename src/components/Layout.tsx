@@ -21,7 +21,7 @@ export function Layout() {
         <header className="flex h-16 items-center justify-between border-b border-white/5 px-6 lg:hidden">
           <div className="flex items-center gap-2 italic">
             <div className="h-3 w-3 rounded-full bg-white" />
-            <span className="font-display text-lg font-medium tracking-tighter text-white">LUMINA</span>
+            <span className="font-display text-lg font-medium tracking-tighter text-white">SNAPVAULT</span>
           </div>
           <div className="flex items-center gap-3">
              {!user && (

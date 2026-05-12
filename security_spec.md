@@ -1,4 +1,4 @@
-# Security Specification - Lumina Gallery
+# Security Specification - SnapVault Archive
 
 ## Data Invariants
 1. A photo must always belong to an existing album and the same user who owns the album.

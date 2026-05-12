@@ -29,7 +29,7 @@ export function Sidebar() {
             <div className="h-1.5 w-1.5 rounded-full bg-black" />
           </div>
           <div>
-             <h1 className="font-display text-xl font-medium tracking-tighter italic text-white">LUMINA</h1>
+             <h1 className="font-display text-xl font-medium tracking-tighter italic text-white">SNAPVAULT</h1>
              <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">Visual Archives</p>
           </div>
         </NavLink>

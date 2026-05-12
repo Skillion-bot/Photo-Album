@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Upload as UploadIcon, X, Image as ImageIcon, CheckCircle2, AlertCircle, FileImage, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { useAuth } from '../components/AuthProvider';
-import { addPhoto, getUserAlbums, uploadFile } from '../lib/firebase';
+import { addPhoto, getUserAlbums, uploadFileWithProgress } from '../lib/firebase';
 import { type Album } from '../types';
 
 export default function UploadPage() {
@@ -14,6 +15,7 @@ export default function UploadPage() {
   
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
@@ -45,9 +47,15 @@ export default function UploadPage() {
       setError('Please select an image file.');
       return;
     }
+
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      setError('File is too large. Maximum size is 50MB for this archive.');
+      return;
+    }
     
     setSelectedFile(file);
     setError(null);
+    setUploadProgress(0);
     
     // Create preview
     const url = URL.createObjectURL(file);
@@ -76,6 +84,7 @@ export default function UploadPage() {
   const clearSelection = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    setUploadProgress(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -85,15 +94,20 @@ export default function UploadPage() {
     
     setIsLoading(true);
     setError(null);
+    setUploadProgress(0);
     
     try {
       if (!formData.title || !formData.albumId) {
          throw new Error("Please fill in all required fields (Classification and Title)");
       }
 
-      // 1. Upload file to Firebase Storage
+      // 1. Upload file to Firebase Storage with progress tracking
       const storagePath = `users/${user.uid}/photos/${Date.now()}_${selectedFile.name}`;
-      const downloadUrl = await uploadFile(selectedFile, storagePath);
+      const downloadUrl = await uploadFileWithProgress(
+        selectedFile, 
+        storagePath, 
+        (progress) => setUploadProgress(progress)
+      );
 
       // 2. Add document to Firestore
       await addPhoto({
@@ -119,6 +133,7 @@ export default function UploadPage() {
         }
       }
       setError(message);
+      setUploadProgress(0);
     } finally {
       setIsLoading(false);
     }
@@ -247,13 +262,25 @@ export default function UploadPage() {
             </div>
 
             <div className="flex gap-4 pt-8">
-              <Button 
-                type="submit" 
-                disabled={isLoading || !selectedFile}
-                className="flex-1 rounded-xl bg-white py-6 text-[10px] uppercase tracking-[0.3em] font-bold text-black hover:bg-white/90 disabled:opacity-50"
-              >
-                {isLoading ? 'Processing...' : 'Authorize Submission'}
-              </Button>
+              <div className="flex-1 space-y-2">
+                <Button 
+                  type="submit" 
+                  disabled={isLoading || !selectedFile}
+                  className="w-full rounded-xl bg-white py-6 text-[10px] uppercase tracking-[0.3em] font-bold text-black hover:bg-white/90 disabled:opacity-50"
+                >
+                  {isLoading ? `Processing... ${Math.round(uploadProgress)}%` : 'Authorize Submission'}
+                </Button>
+                {isLoading && (
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                    <motion.div 
+                      className="h-full bg-white" 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${uploadProgress}%` }}
+                      transition={{ duration: 0.1 }}
+                    />
+                  </div>
+                )}
+              </div>
               <button 
                 type="button" 
                 onClick={() => navigate('/')}

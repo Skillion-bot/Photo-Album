@@ -97,7 +97,7 @@ export function PhotoViewer({ photo, onClose }: PhotoViewerProps) {
              <div className="flex flex-wrap gap-2">
                 <span className="px-2.5 py-1 text-[9px] uppercase tracking-widest text-white/40 bg-white/5 border border-white/5 rounded">#Visual</span>
                 <span className="px-2.5 py-1 text-[9px] uppercase tracking-widest text-white/40 bg-white/5 border border-white/5 rounded">#Archive</span>
-                <span className="px-2.5 py-1 text-[9px] uppercase tracking-widest text-white/40 bg-white/5 border border-white/5 rounded">#Luminal</span>
+                <span className="px-2.5 py-1 text-[9px] uppercase tracking-widest text-white/40 bg-white/5 border border-white/5 rounded">#Vaulted</span>
              </div>
              
              <div className="pt-8 flex gap-3">
