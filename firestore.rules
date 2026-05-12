@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Helpers ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'email', 'createdAt']) &&
+             data.keys().size() <= 5 &&
+             data.id == request.auth.uid &&
+             data.email is string && data.email.size() <= 256 &&
+             data.createdAt is int;
+    }
+
+    function isValidAlbum(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'createdAt']) &&
+             data.keys().size() <= 10 &&
+             data.userId == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.createdAt is int;
+    }
+
+    function isValidPhoto(data) {
+      return data.keys().hasAll(['id', 'userId', 'albumId', 'url', 'title', 'createdAt']) &&
+             data.keys().size() <= 12 &&
+             data.userId == request.auth.uid &&
+             data.albumId is string && data.albumId.size() <= 128 &&
+             data.url is string && data.url.size() <= 1000 &&
+             data.title is string && data.title.size() <= 100 &&
+             data.createdAt is int &&
+             data.createdAt <= request.time.toMillis() &&
+             data.createdAt > request.time.toMillis() - 300000; // 5 minute window
+    }
+
+    // --- Rules ---
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().createdAt <= request.time.toMillis() && 
+                    incoming().createdAt > request.time.toMillis() - 300000;
+      allow update: if isOwner(userId) && isValidUser(incoming()) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'photoURL']) &&
+                    incoming().createdAt == existing().createdAt;
+    }
+
+    match /albums/{albumId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(albumId) && isValidAlbum(incoming()) && 
+                    incoming().id == albumId &&
+                    incoming().createdAt <= request.time.toMillis() &&
+                    incoming().createdAt > request.time.toMillis() - 300000;
+                    
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && 
+                    isValidAlbum(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'coverUrl', 'photoCount']) &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt;
+                    
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    match /photos/{photoId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(photoId) && isValidPhoto(incoming()) &&
+                    incoming().id == photoId &&
+                    (
+                      albumIdIsDefault(incoming().albumId) ||
+                      (exists(/databases/$(database)/documents/albums/$(incoming().albumId)) &&
+                       get(/databases/$(database)/documents/albums/$(incoming().albumId)).data.userId == request.auth.uid)
+                    );
+
+      allow update: if isSignedIn() && existing().userId == request.auth.uid &&
+                    isValidPhoto(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'albumId']) &&
+                    incoming().userId == existing().userId &&
+                    incoming().createdAt == existing().createdAt;
+
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    function albumIdIsDefault(id) {
+      return id == 'nature' || id == 'urban';
+    }
+  }
+}

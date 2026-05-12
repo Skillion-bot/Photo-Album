@@ -1,0 +1,80 @@
+import { type Photo, type Album } from './types';
+
+export const SAMPLE_ALBUMS: Album[] = [
+  {
+    id: 'nature',
+    userId: 'sample',
+    name: 'Nature Escapes',
+    description: 'Breathtaking landscapes and wild wonders.',
+    coverUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000',
+    photoCount: 12,
+    createdAt: Date.now() - 1000000,
+  },
+  {
+    id: 'urban',
+    userId: 'sample',
+    name: 'Urban Explorer',
+    description: 'City lights and architectural marvels.',
+    coverUrl: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=1000',
+    photoCount: 8,
+    createdAt: Date.now() - 5000000,
+  },
+];
+
+export const SAMPLE_PHOTOS: Photo[] = [
+  {
+    id: '1',
+    userId: 'sample',
+    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000',
+    title: 'Majestic Peaks',
+    description: 'The morning sun hitting the highest peaks of the Himalayas.',
+    albumId: 'nature',
+    createdAt: Date.now() - 100000,
+    width: 1000,
+    height: 667,
+  },
+  {
+    id: '2',
+    userId: 'sample',
+    url: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&q=80&w=1000',
+    title: 'Peaceful Lake',
+    description: 'Reflection of autumn colors on a still mountain lake.',
+    albumId: 'nature',
+    createdAt: Date.now() - 200000,
+    width: 1000,
+    height: 750,
+  },
+  {
+    id: '3',
+    userId: 'sample',
+    url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=1000',
+    title: 'Subway Station',
+    description: 'Symmetry and motion in the heart of Tokyo.',
+    albumId: 'urban',
+    createdAt: Date.now() - 300000,
+    width: 1000,
+    height: 667,
+  },
+  {
+    id: '4',
+    userId: 'sample',
+    url: 'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=1000',
+    title: 'Starry Night',
+    description: 'Milky way visible over the pine forest.',
+    albumId: 'nature',
+    createdAt: Date.now() - 400000,
+    width: 1000,
+    height: 562,
+  },
+  {
+    id: '5',
+    userId: 'sample',
+    url: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&q=80&w=1000',
+    title: 'Neon Nights',
+    description: 'The vibrant streets of Hong Kong at midnight.',
+    albumId: 'urban',
+    createdAt: Date.now() - 500000,
+    width: 1000,
+    height: 1500,
+  }
+];

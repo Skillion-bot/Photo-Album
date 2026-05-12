@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", sans-serif;
+  
+  --color-brand-bg: #0A0A0A;
+  --color-brand-text: #F5F5F5;
+  --color-brand-accent: #FFFFFF;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-brand-text antialiased selection:bg-white selection:text-black;
+  }
+}
+
+.masonry-grid {
+  display: columns;
+  column-count: 1;
+  column-gap: 2rem;
+}
+
+@screen sm {
+  .masonry-grid {
+    column-count: 2;
+  }
+}
+
+@screen lg {
+  .masonry-grid {
+    column-count: 3;
+  }
+}
+
+@screen xl {
+  .masonry-grid {
+    column-count: 4;
+  }
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 2rem;
+}
+
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
