@@ -6,8 +6,8 @@ export interface Photo {
   description?: string;
   albumId: string;
   createdAt: number;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
 }
 
 export interface Album {

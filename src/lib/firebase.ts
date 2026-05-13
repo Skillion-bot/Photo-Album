@@ -43,29 +43,29 @@ export async function signInWithGoogle() {
 
     for (const album of defaultAlbums) {
       const albumRef = doc(db, 'albums', album.id);
-      const albumSnap = await getDoc(albumRef);
-      
-      // If global album doesn't exist, create it owned by the first user who signs in (or we can just skip this and use default logic in rules)
-      // Actually, my rules say: albumIdIsDefault(incoming().albumId) || exists(...) && userId == uid
-      // If it IS a default ID, it passes the check! So we don't even NEED the document for default ones.
-      // But for the UI to list them, we need them or have them hardcoded.
-      
-      if (!albumSnap.exists()) {
-        await setDoc(albumRef, {
-          ...album,
-          userId: user.uid, // First person to sign in "owns" the default albums? Or we could make userId 'system'
-          photoCount: 0,
-          createdAt: now,
-          coverUrl: album.id === 'nature' 
-            ? 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000'
-            : 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=1000'
-        });
+      try {
+        const albumSnap = await getDoc(albumRef);
+        if (!albumSnap.exists()) {
+          console.log(`Initializing default album: ${album.id}`);
+          await setDoc(albumRef, {
+            ...album,
+            userId: user.uid,
+            photoCount: 0,
+            createdAt: now,
+            coverUrl: album.id === 'nature' 
+              ? 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000'
+              : 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&q=80&w=1000'
+          });
+        }
+      } catch (err) {
+        console.warn(`Could not verify/create default album ${album.id}:`, err);
+        // We continue anyway as the rules allow uploading to these IDs without the doc existing
       }
     }
     
     return user;
   } catch (error) {
-    console.error('Error signing in with Google:', error);
+    console.error('Error in signInWithGoogle:', error);
     throw error;
   }
 }
@@ -87,7 +87,7 @@ async function testConnection() {
 testConnection();
 
 // --- Firestore Error Handler ---
-enum OperationType {
+export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
   DELETE = 'delete',
@@ -96,7 +96,7 @@ enum OperationType {
   WRITE = 'write',
 }
 
-interface FirestoreErrorInfo {
+export interface FirestoreErrorInfo {
   error: string;
   operationType: OperationType;
   path: string | null;
@@ -107,7 +107,7 @@ interface FirestoreErrorInfo {
   }
 }
 
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -118,18 +118,27 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  console.error('Firestore Error Detailed: ', JSON.stringify(errInfo, null, 2));
   throw new Error(JSON.stringify(errInfo));
 }
 
 // --- Data Services ---
 
-export async function getUserPhotos(userId: string): Promise<Photo[]> {
+export async function getUserPhotos(userId: string, albumId: string): Promise<Photo[]> {
   const path = 'photos';
   try {
-    const q = query(collection(db, path), where('userId', '==', userId));
+    // Robust filter as requested
+    const q = query(
+      collection(db, path), 
+      where('userId', '==', userId),
+      where('albumId', '==', albumId)
+    );
+    
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Photo));
+    const photos = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Photo));
+    
+    // In-memory sort to avoid requiring manual indexes
+    return photos.sort((a, b) => b.createdAt - a.createdAt);
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];
@@ -166,53 +175,10 @@ export async function addPhoto(photoData: Omit<Photo, 'id' | 'createdAt'>) {
   }
 }
 
-export async function uploadFileWithProgress(
-  file: File, 
-  path: string, 
-  onProgress: (progress: number) => void
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    try {
-      const storageRef = ref(storage, path);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          onProgress(progress);
-        }, 
-        (error) => {
-          console.error('Storage Upload Error:', error);
-          reject(new Error('Storage upload failed. Please check your connection or storage permissions.'));
-        }, 
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        }
-      );
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-export async function uploadFile(file: File, path: string): Promise<string> {
-  try {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    return getDownloadURL(snapshot.ref);
-  } catch (error) {
-    console.error('Storage Upload Error:', error);
-    throw new Error('Storage upload failed. Please check your connection or storage permissions.');
-  }
-}
-
 export async function deletePhoto(photoId: string) {
   const path = `photos/${photoId}`;
   try {
     const docRef = doc(db, 'photos', photoId);
-    await setDoc(docRef, { deleted: true }, { merge: true }); // Or full delete
-    // For this app, let's just delete the doc
     const { deleteDoc } = await import('firebase/firestore');
     await deleteDoc(docRef);
   } catch (error) {

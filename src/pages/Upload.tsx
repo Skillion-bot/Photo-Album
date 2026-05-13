@@ -5,7 +5,8 @@ import { Upload as UploadIcon, X, Image as ImageIcon, CheckCircle2, AlertCircle,
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { useAuth } from '../components/AuthProvider';
-import { addPhoto, getUserAlbums, uploadFileWithProgress } from '../lib/firebase';
+import { addPhoto, getUserAlbums } from '../lib/firebase';
+import { compressImage } from '../lib/imageUtils';
 import { type Album } from '../types';
 
 export default function UploadPage() {
@@ -16,13 +17,11 @@ export default function UploadPage() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 1000, height: 1000 });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -49,26 +48,18 @@ export default function UploadPage() {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit
-      setError('File is too large. Maximum size is 50MB for this archive.');
+    if (file.size > 4 * 1024 * 1024) { // 4MB limit as requested
+      setError('File is too large. Maximum size is 4MB for direct vault storage.');
       return;
     }
     
     setSelectedFile(file);
     setError(null);
-    setUploadProgress(0);
     setUploadStatus(null);
     
     // Create preview
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    
-    // Get dimensions
-    const img = new Image();
-    img.onload = () => {
-      setDimensions({ width: img.width, height: img.height });
-    };
-    img.src = url;
   };
 
   const onDragOver = (e: React.DragEvent) => {
@@ -86,7 +77,6 @@ export default function UploadPage() {
   const clearSelection = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
-    setUploadProgress(0);
     setUploadStatus(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -97,53 +87,46 @@ export default function UploadPage() {
     
     setIsLoading(true);
     setError(null);
-    setUploadProgress(0);
-    setUploadStatus('Preparing artifact for synchronization...');
+    setUploadStatus('Initializing compression protocols...');
     
     try {
       if (!formData.title || !formData.albumId) {
          throw new Error("Please fill in all required fields (Classification and Title)");
       }
 
-      // 1. Upload file to Firebase Storage with progress tracking
-      setUploadStatus('Uploading visual study to storage...');
-      const storagePath = `users/${user.uid}/photos/${Date.now()}_${selectedFile.name}`;
-      const downloadUrl = await uploadFileWithProgress(
-        selectedFile, 
-        storagePath, 
-        (progress) => {
-          setUploadProgress(progress);
-          if (progress === 100) setUploadStatus('Verifying storage integrity...');
-        }
-      );
-
-      // 2. Add document to Firestore
-      setUploadStatus('Recording metadata in the index...');
+      // 1. Compress Image to Base64 (under 1MB limit)
+      setUploadStatus('Optimizing artifact for direct vault storage...');
+      const base64Url = await compressImage(selectedFile);
+      
+      // 2. Add document to Firestore (Stores base64 directly)
+      setUploadStatus('Recording artifact in the distributed index...');
       await addPhoto({
         userId: user.uid,
         albumId: formData.albumId,
-        url: downloadUrl,
+        url: base64Url,
         title: formData.title,
         description: formData.description,
-        width: dimensions.width,
-        height: dimensions.height,
       });
 
       setUploadStatus('Artifact successfully archived.');
       setSuccess(true);
       setTimeout(() => navigate('/'), 2000);
     } catch (err) {
+      console.error('Upload Process Failed:', err);
       let message = 'Failed to upload photo';
       if (err instanceof Error) {
         try {
           const parsed = JSON.parse(err.message);
-          message = parsed.error || err.message;
+          if (parsed.error && parsed.error.includes('Permission denied')) {
+             message = "Security Rule Violation: Resource authorization failed. Please check album ownership.";
+          } else {
+             message = parsed.error || err.message;
+          }
         } catch {
           message = err.message;
         }
       }
       setError(message);
-      setUploadProgress(0);
       setUploadStatus(null);
     } finally {
       setIsLoading(false);
@@ -279,16 +262,17 @@ export default function UploadPage() {
                   disabled={isLoading || !selectedFile}
                   className="w-full rounded-xl bg-white py-6 text-[10px] uppercase tracking-[0.3em] font-bold text-black hover:bg-white/90 disabled:opacity-50"
                 >
-                  {isLoading ? `Synthesizing... ${Math.round(uploadProgress)}%` : 'Authorize Submission'}
+                  {isLoading ? 'Synthesizing...' : 'Authorize Submission'}
                 </Button>
                 
                 {isLoading && (
                   <div className="space-y-2">
                     <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                       <motion.div 
-                        className="h-full bg-white transition-all duration-300" 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${uploadProgress}%` }}
+                        className="h-full bg-white" 
+                        initial={{ width: "0%" }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 2, repeat: Infinity }}
                       />
                     </div>
                     {uploadStatus && (

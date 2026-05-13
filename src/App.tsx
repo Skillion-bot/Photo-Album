@@ -16,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="albums" element={<Albums />} />
+          <Route path="albums/:albumId" element={<Home />} />
           <Route path="upload" element={<Upload />} />
         </Route>
       </Routes>

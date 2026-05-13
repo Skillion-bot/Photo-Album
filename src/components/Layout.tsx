@@ -21,7 +21,21 @@ export function Layout() {
         <header className="flex h-16 items-center justify-between border-b border-white/5 px-6 lg:hidden">
           <div className="flex items-center gap-2 italic">
             <div className="h-3 w-3 rounded-full bg-white" />
-            <span className="font-display text-2xl font-bold tracking-tighter text-white">SNAPVAULT</span>
+            <motion.span 
+              className="font-display text-2xl font-bold tracking-tighter text-white"
+              animate={{ 
+                fontWeight: [700, 800, 700],
+                letterSpacing: ["-0.05em", "0.05em", "-0.05em"],
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{ 
+                duration: 6, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            >
+              SNAPVAULT
+            </motion.span>
           </div>
           <div className="flex items-center gap-3">
              {!user && (

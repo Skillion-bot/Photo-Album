@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 import { NavLink } from 'react-router-dom';
 import { Image, Grid, Folder, History, LogIn, LogOut, Disc } from 'lucide-react';
 import { Button } from './ui/Button';
@@ -25,11 +26,28 @@ export function Sidebar() {
     <aside className="hidden w-72 flex-col border-r border-white/5 bg-brand-bg p-8 lg:flex">
       <div className="mb-12">
         <NavLink to="/" className="group flex items-center gap-3">
-          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white transition-transform group-hover:scale-110">
+          <motion.div 
+            className="flex h-5 w-5 items-center justify-center rounded-full bg-white transition-transform group-hover:scale-110"
+            whileHover={{ scale: 1.1 }}
+          >
             <div className="h-1.5 w-1.5 rounded-full bg-black" />
-          </div>
+          </motion.div>
           <div>
-             <h1 className="font-display text-2xl font-bold tracking-tighter italic text-white leading-none">SNAPVAULT</h1>
+             <motion.h1 
+               className="font-display text-2xl font-bold tracking-tighter italic text-white leading-none"
+               animate={{ 
+                 fontWeight: [700, 800, 700],
+                 letterSpacing: ["-0.05em", "0.05em", "-0.05em"],
+                 opacity: [0.8, 1, 0.8]
+               }}
+               transition={{ 
+                 duration: 6, 
+                 repeat: Infinity, 
+                 ease: "easeInOut" 
+               }}
+             >
+               SNAPVAULT
+             </motion.h1>
              <p className="text-[10px] uppercase tracking-[0.25em] text-white/30 mt-1">Visual Study Archive</p>
           </div>
         </NavLink>
@@ -45,14 +63,23 @@ export function Sidebar() {
                   to={item.path}
                   className={({ isActive }) => cn(
                     "flex items-center gap-4 text-base transition-all duration-300",
-                    isActive ? "text-white font-semibold transform translate-x-2" : "text-white/30 hover:text-white hover:translate-x-1"
+                    isActive ? "text-white font-semibold transform translate-x-2" : "text-white/30 hover:text-white hover:translate-x-1 hover:font-semibold"
                   )}
                 >
                   {({ isActive }) => (
-                    <>
+                    <motion.div 
+                      className="flex items-center gap-4"
+                      whileHover={{ x: 8 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                    >
                       <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-white/20")} />
-                      <span className="tracking-tight">{item.name}</span>
-                    </>
+                      <motion.span 
+                        className="tracking-tight"
+                        whileHover={{ fontWeight: 800 }}
+                      >
+                        {item.name}
+                      </motion.span>
+                    </motion.div>
                   )}
                 </NavLink>
               </li>
